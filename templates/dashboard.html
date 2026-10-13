@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>python
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-4">
+        <h1 class="text-xl font-semibold text-slate-800">Campus Companion</h1>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col h-[500px]">
+            <h2 class="text-lg font-semibold text-slate-800 mb-4">How are you doing?</h2>
+
+            {% if stage == "mood_pick" %}
+            <div class="flex flex-col items-center justify-center h-full text-center">
+                <form method="POST" action="/checkin/language" class="mb-4">
+                    <select name="language" onchange="this.form.submit()"
+                            class="text-sm border border-slate-300 rounded-lg px-2 py-1 text-slate-600">
+                        <option value="English" {% if language == "English" %}selected{% endif %}>English</option>
+                        <option value="Malayalam" {% if language == "Malayalam" %}selected{% endif %}>മലയാളം</option>
+                        <option value="Hindi" {% if language == "Hindi" %}selected{% endif %}>हिन्दी</option>
+                        <option value="Tamil" {% if language == "Tamil" %}selected{% endif %}>தமிழ்</option>
+                        <option value="Spanish" {% if language == "Spanish" %}selected{% endif %}>Español</option>
+                        <option value="Arabic" {% if language == "Arabic" %}selected{% endif %}>العربية</option>
+                    </select>
+                </form>
+
+                <p class="text-slate-600 mb-4">How's your battery today?</p>
+                <form method="POST" action="/checkin/mood" class="flex gap-2">
+                    <button name="initial_mood" value="1" class="w-10 h-10 rounded-full bg-red-100 hover:bg-red-200 text-red-700 font-medium">1</button>
+                    <button name="initial_mood" value="2" class="w-10 h-10 rounded-full bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium">2</button>
+                    <button name="initial_mood" value="3" class="w-10 h-10 rounded-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium">3</button>
+                    <button name="initial_mood" value="4" class="w-10 h-10 rounded-full bg-lime-100 hover:bg-lime-200 text-lime-700 font-medium">4</button>
+                    <button name="initial_mood" value="5" class="w-10 h-10 rounded-full bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-medium">5</button>
+                </form>
+                <p class="text-xs text-slate-400 mt-3">1 = running on empty, 5 = feeling great</p>
+
+                {% if continuable %}
+                <div class="mt-6 w-full border-t pt-4">
+                    <p class="text-xs text-slate-400 mb-2">Saved conversations you can continue:</p>
+                    {% for convo in continuable %}
+                    <form method="POST" action="/checkin/continue/{{ convo.id }}" class="mb-2">
+                        <button type="submit" class="w-full text-left text-sm bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-slate-600">
+                            {{ convo.preview }}
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            {% elif stage == "readiness" %}
+            <div class="flex flex-col items-center justify-center h-full text-center">
+                <p class="text-slate-600 mb-4">What sounds right for today?</p>
+                <form method="POST" action="/checkin/readiness" class="flex flex-col gap-2 w-full max-w-[220px]">
+                    <button name="wants_to_talk" value="yes" class="bg-slate-800 text-white rounded-lg px-4 py-2 text-sm hover:bg-slate-700">
+                        I want to talk
+                    </button>
+                    <button name="wants_to_talk" value="listen" class="bg-slate-100 text-slate-700 rounded-lg px-4 py-2 text-sm hover:bg-slate-200 border border-slate-300">
+                        I just want to listen
+                    </button>
+                    <button name="wants_to_talk" value="no" class="text-xs text-slate-400 hover:text-slate-600 underline mt-1">
+                        Just log my mood
+                    </button>
+                    <button name="wants_to_talk" value="distraction" class="text-xs text-slate-400 hover:text-slate-600 underline mt-1">
+                        Quick distraction
+                    </button>
+                </form>
+            </div>
+
+            {% elif stage == "listen_pick_topic" %}
+            <div class="flex flex-col items-center justify-center h-full text-center">
+                <p class="text-slate-600 mb-4">What would help right now?</p>
+                <form method="POST" action="/checkin/listen/topic" class="flex flex-col gap-2 w-full max-w-[220px] mb-3">
+                    <button name="topic" value="calming" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-700">
+                        Something calming
+                    </button>
+                    <button name="topic" value="distraction" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-700">
+                        A distraction
+                    </button>
+                    <button name="topic" value="encouragement" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-700">
+                        Encouragement
+                    </button>
+                    <button name="topic" value="company" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-700">
+                        Just company
+                    </button>
+                </form>
+
+                <div class="w-full max-w-[220px] border-t pt-3">
+                    <p class="text-xs text-slate-400 mb-2">Or tell me what you'd like to hear about:</p>
+                    <form method="POST" action="/checkin/listen/custom" class="flex gap-2">
+                        <input type="text" name="custom_topic" placeholder="e.g. the ocean" autocomplete="off"
+                               class="flex-1 border border-slate-300 rounded-lg px-2 py-1 text-sm">
+                        <button type="submit" class="bg-slate-800 text-white rounded-lg px-3 text-sm hover:bg-slate-700">
+                            Go
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% elif stage == "listening" %}
+            <div class="flex flex-col items-center justify-center h-full text-center px-4">
+                <p class="text-slate-600 mb-4">{{ listen_message }}</p>
+
+                <div class="flex gap-2 mb-3 text-xs">
+                    <form method="POST" action="/checkin/listen/length">
+                        <input type="hidden" name="length" value="short">
+                        <button type="submit" class="text-slate-400 hover:text-slate-600 underline">Shorter</button>
+                    </form>
+                    <form method="POST" action="/checkin/listen/length">
+                        <input type="hidden" name="length" value="normal">
+                        <button type="submit" class="text-slate-400 hover:text-slate-600 underline">Normal</button>
+                    </form>
+                    <form method="POST" action="/checkin/listen/length">
+                        <input type="hidden" name="length" value="long">
+                        <button type="submit" class="text-slate-400 hover:text-slate-600 underline">Longer</button>
+                    </form>
+                </div>
+
+                <form method="POST" action="/checkin/listen/save_moment" class="mb-3">
+                    <input type="hidden" name="listen_message" value="{{ listen_message }}">
+                    <button type="submit" class="text-xs text-slate-400 hover:text-slate-600 underline">
+                        {% if just_saved %}Saved ✓{% else %}Save this{% endif %}
+                    </button>
+                </form>
+
+                <form method="POST" action="/checkin/listen/more" class="mb-3">
+                    <button type="submit" class="bg-slate-800 text-white rounded-lg px-4 py-2 text-sm hover:bg-slate-700">
+                        Keep going
+                    </button>
+                </form>
+
+                <form method="POST" action="/checkin/listen/respond" class="flex gap-2 mb-3 w-full">
+                    <input type="text" name="feedback" placeholder="Something else? (optional)" autocomplete="off"
+                           class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                    <button type="submit" class="bg-slate-100 text-slate-700 border border-slate-300 rounded-lg px-3 text-sm hover:bg-slate-200">
+                        Send
+                    </button>
+                </form>
+
+                <form method="POST" action="/checkin/listen/done">
+                    <button type="submit" class="bg-slate-100 text-slate-700 rounded-lg px-4 py-2 text-sm hover:bg-slate-200 border border-slate-300">
+                        That's enough for today
+                    </button>
+                </form>
+            </div>
+
+{% elif stage == "listen_break" %}
+<div class="flex flex-col h-full">
+    <p class="text-xs text-slate-400 text-center mb-2">A little visual pause</p>
+    <div id="breakBubblePanel" class="flex-1 relative bg-slate-50 rounded-lg overflow-hidden"></div>
+    <script>
+        (function() {
+            const panel = document.getElementById("breakBubblePanel");
+            const colors = ["#a7f3d0", "#fbcfe8", "#c7d2fe", "#fde68a"];
+            function spawn() {
+                const b = document.createElement("div");
+                const size = 20 + Math.random() * 24;
+                b.style.cssText = "position:absolute;width:" + size + "px;height:" + size + "px;border-radius:50%;background:" + colors[Math.floor(Math.random()*colors.length)] + ";left:" + (Math.random()*85) + "%;bottom:-30px;cursor:pointer;transition:bottom 5s linear, opacity 0.2s;";
+                panel.appendChild(b);
+                requestAnimationFrame(function() { b.style.bottom = "90%"; });
+                b.onclick = function() { b.style.opacity = "0"; setTimeout(function(){ b.remove(); }, 200); };
+                setTimeout(function() { if (b.parentNode) b.remove(); }, 5200);
+            }
+            const spawner = setInterval(spawn, 800);
+        })();
+    </script>
+    <form method="POST" action="/checkin/listen/resume" class="mt-3">
+        <button type="submit" class="w-full bg-slate-800 text-white rounded-lg py-2 text-sm hover:bg-slate-700">Resume</button>
+    </form>
+</div>
+
+{% elif stage == "distraction_pick" %}
+<div class="flex flex-col items-center justify-center h-full text-center">
+    <p class="text-slate-600 mb-4">Pick something quick:</p>
+    <form method="POST" action="/checkin/distraction/pick" class="flex flex-col gap-2 w-full max-w-[220px]">
+        <button name="distraction_type" value="bubble" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-700">
+            Bubble pop
+        </button>
+        <button name="distraction_type" value="grounding" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-700">
+            Grounding
+        </button>
+        <button name="distraction_type" value="balloon" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-700">
+            Worry balloon
+        </button>
+        <button name="distraction_type" value="sand" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-700">
+            Zen sand garden
+        </button>
+        <button name="distraction_type" value="stars" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg px-4 py-2 text-sm text-slate-700">
+            Star drawing
+        </button>
+    </form>
+</div>
+
+            {% elif stage == "distraction_active" %}
+            <div class="flex flex-col h-full">
+                {% if distraction_type == "breathing" %}
+                <div class="flex-1 flex flex-col items-center justify-center">
+                    <div id="breatheCircle" class="rounded-full bg-emerald-200" style="width:100px;height:100px;transition:transform 4s ease-in-out;"></div>
+                    <p id="breatheLabel" class="mt-4 text-sm text-slate-500">Breathe in</p>
+                </div>
+                <script>
+                    (function() {
+                        let big = false;
+                        const circle = document.getElementById("breatheCircle");
+                        const label = document.getElementById("breatheLabel");
+                        setInterval(function() {
+                            big = !big;
+                            circle.style.transform = big ? "scale(1.6)" : "scale(1)";
+                            label.textContent = big ? "Breathe out" : "Breathe in";
+                        }, 4000);
+                    })();
+                </script>
+
+                {% elif distraction_type == "bubble" %}
+                <div id="bubblePanel" class="flex-1 relative bg-slate-50 rounded-lg overflow-hidden"></div>
+                <script>
+                    (function() {
+                        const panel = document.getElementById("bubblePanel");
+                        const colors = ["#a7f3d0", "#fbcfe8", "#c7d2fe", "#fde68a"];
+                        function spawn() {
+                            const b = document.createElement("div");
+                            const size = 24 + Math.random() * 28;
+                            b.style.cssText = "position:absolute;width:" + size + "px;height:" + size + "px;border-radius:50%;background:" + colors[Math.floor(Math.random()*colors.length)] + ";left:" + (Math.random()*85) + "%;bottom:-40px;cursor:pointer;transition:bottom 6s linear, opacity 0.2s;";
+                            panel.appendChild(b);
+                            requestAnimationFrame(function() { b.style.bottom = "90%"; });
+                            b.onclick = function() { b.style.opacity = "0"; setTimeout(function(){ b.remove(); }, 200); };
+                            setTimeout(function() { if (b.parentNode) b.remove(); }, 6200);
+                        }
+                        setInterval(spawn, 900);
+                    })();
+                </script>
+
+                {% elif distraction_type == "grounding" %}
+                <div class="flex-1 flex flex-col justify-center">
+                    <p id="groundStep" class="text-sm text-slate-600 mb-2">Name 5 things you can see</p>
+                    <input id="groundInput" placeholder="Type one, press enter" autocomplete="off"
+                           class="border border-slate-300 rounded-lg px-3 py-2 text-sm mb-2">
+                    <div id="groundList" class="text-xs text-slate-400 space-y-1"></div>
+                </div>
+                <script>
+                    (function() {
+                        const steps = [
+                            {count: 5, label: "Name 5 things you can see"},
+                            {count: 4, label: "Name 4 things you can touch"},
+                            {count: 3, label: "Name 3 things you can hear"},
+                            {count: 2, label: "Name 2 things you can smell"},
+                            {count: 1, label: "Name 1 thing you can taste"}
+                        ];
+                        let stepIndex = 0;
+                        let countInStep = 0;
+                        const stepEl = document.getElementById("groundStep");
+                        const listEl = document.getElementById("groundList");
+                        const input = document.getElementById("groundInput");
+                        input.addEventListener("keydown", function(e) {
+                            if (e.key === "Enter" && input.value.trim()) {
+                                const item = document.createElement("div");
+                                item.textContent = "- " + input.value.trim();
+                                listEl.appendChild(item);
+                                input.value = "";
+                                countInStep++;
+                                if (countInStep >= steps[stepIndex].count) {
+                                    stepIndex++;
+                                    countInStep = 0;
+                                    if (stepIndex < steps.length) {
+                                        stepEl.textContent = steps[stepIndex].label;
+                                    } else {
+                                        stepEl.textContent = "Nice - you're here, now.";
+                                        input.style.display = "none";
+                                    }
+                                }
+                            }
+                        });
+                    })();
+                </script>
+                {% elif distraction_type == "balloon" %}
+                <div class="flex-1 relative bg-slate-50 rounded-lg overflow-hidden flex flex-col items-center">
+                    <input id="worryInput" placeholder="Type a worry, press enter to release" autocomplete="off"
+                           class="mt-4 w-5/6 border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <script>
+                    (function() {
+                        const panel = document.currentScript.previousElementSibling;
+                        const input = document.getElementById("worryInput");
+                        input.addEventListener("keydown", function(e) {
+                            if (e.key === "Enter" && input.value.trim()) {
+                                const b = document.createElement("div");
+                                b.textContent = input.value.trim();
+                                b.style.cssText = "position:absolute;bottom:-30px;left:" + (20 + Math.random()*50) + "%;background:#fbcfe8;color:#4A1B2E;padding:8px 14px;border-radius:20px;font-size:12px;max-width:70%;text-align:center;transition:bottom 5s ease-in, opacity 1s ease-in 4s;";
+                                panel.appendChild(b);
+                                requestAnimationFrame(function() { b.style.bottom = "85%"; });
+                                setTimeout(function() { b.style.opacity = "0"; }, 4000);
+                                setTimeout(function() { b.remove(); }, 5200);
+                                input.value = "";
+                            }
+                        });
+                    })();
+                </script>
+
+                {% elif distraction_type == "sand" %}
+                <div class="flex-1 rounded-lg overflow-hidden" style="background:#EFE7D8;">
+                    <canvas id="sandCanvas" width="500" height="220" style="width:100%;height:100%;cursor:crosshair;"></canvas>
+                </div>
+                <script>
+                    (function() {
+                        const canvas = document.getElementById("sandCanvas");
+                        const ctx = canvas.getContext("2d");
+                        ctx.fillStyle = "#EFE7D8";
+                        ctx.fillRect(0, 0, 500, 220);
+                        let drawing = false;
+                        function pos(e) {
+                            const r = canvas.getBoundingClientRect();
+                            const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+                            const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+                            return {x: cx * (500 / r.width), y: cy * (220 / r.height)};
+                        }
+                        canvas.addEventListener("mousedown", function() { drawing = true; });
+                        canvas.addEventListener("mouseup", function() { drawing = false; });
+                        canvas.addEventListener("mouseleave", function() { drawing = false; });
+                        canvas.addEventListener("mousemove", function(e) {
+                            if (!drawing) return;
+                            const p = pos(e);
+                            ctx.strokeStyle = "#C9B896";
+                            ctx.lineWidth = 3;
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                            ctx.stroke();
+                        });
+                    })();
+                </script>
+
+                {% elif distraction_type == "stars" %}
+                <div class="flex-1 rounded-lg overflow-hidden relative" style="background:#0F1428;">
+                    <p id="starClue" class="absolute top-2 left-0 right-0 text-center text-xs text-amber-200 z-10"></p>
+                    <canvas id="starCanvas" width="500" height="220" style="width:100%;height:100%;"></canvas>
+                    <p id="starMsg" class="absolute bottom-2 left-0 right-0 text-center text-xs text-amber-200"></p>
+                </div>
+                <script>
+                    (function() {
+                        const canvas = document.getElementById("starCanvas");
+                        const ctx = canvas.getContext("2d");
+                        const clueEl = document.getElementById("starClue");
+                        const msgEl = document.getElementById("starMsg");
+
+                        const levels = [
+                            {clue: "A simple three-sided shape", points: [{x:250,y:40},{x:150,y:180},{x:350,y:180},{x:250,y:40}]},
+                            {clue: "Where you might live", points: [{x:180,y:180},{x:180,y:100},{x:250,y:50},{x:320,y:100},{x:320,y:180},{x:180,y:180}]},
+                            {clue: "It twinkles at night", points: [{x:250,y:30},{x:280,y:110},{x:365,y:110},{x:295,y:160},{x:320,y:240},{x:250,y:190},{x:180,y:240},{x:205,y:160},{x:135,y:110},{x:220,y:110},{x:250,y:30}]}
+                        ];
+                        let levelIndex = 0;
+                        let targetIndex = 1;
+
+                        function drawLevel() {
+                            ctx.clearRect(0, 0, 500, 220);
+                            ctx.fillStyle = "#0F1428";
+                            ctx.fillRect(0, 0, 500, 220);
+                            const level = levels[levelIndex];
+                            clueEl.textContent = "Level " + (levelIndex + 1) + ": " + level.clue;
+                            msgEl.textContent = "";
+                            level.points.slice(0, -1).forEach(function(p) {
+                                ctx.fillStyle = "#F4E9C1";
+                                ctx.beginPath();
+                                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                                ctx.fill();
+                            });
+                            targetIndex = 1;
+                        }
+                        drawLevel();
+
+                        function celebrate() {
+                            msgEl.textContent = "✨ Nicely done! ✨";
+                            setTimeout(function() {
+                                if (levelIndex < levels.length - 1) {
+                                    levelIndex++;
+                                    drawLevel();
+                                } else {
+                                    clueEl.textContent = "All levels complete - well done.";
+                                    msgEl.textContent = "";
+                                }
+                            }, 1400);
+                        }
+
+                        function failLevel() {
+                            msgEl.textContent = "Not quite - let's try that one again.";
+                            setTimeout(drawLevel, 1000);
+                        }
+
+                        canvas.addEventListener("click", function(e) {
+                            const r = canvas.getBoundingClientRect();
+                            const cx = (e.clientX - r.left) * (500 / r.width);
+                            const cy = (e.clientY - r.top) * (220 / r.height);
+                            const level = levels[levelIndex];
+                            const want = level.points[targetIndex];
+                            const dist = Math.hypot(want.x - cx, want.y - cy);
+
+                            if (dist < 28) {
+                                const prev = level.points[targetIndex - 1];
+                                ctx.strokeStyle = "#F4E9C1";
+                                ctx.lineWidth = 2;
+                                ctx.beginPath();
+                                ctx.moveTo(prev.x, prev.y);
+                                ctx.lineTo(want.x, want.y);
+                                ctx.stroke();
+                                targetIndex++;
+                                if (targetIndex >= level.points.length) {
+                                    celebrate();
+                                }
+                            } else {
+                                let nearAny = level.points.some(function(p) {
+                                    return Math.hypot(p.x - cx, p.y - cy) < 28;
+                                });
+                                if (nearAny) failLevel();
+                            }
+                        });
+                    })();
+                </script>
+                {% endif %}
+
+                <form method="POST" action="/checkin/reset" class="mt-3">
+                    <button type="submit" class="w-full text-sm text-slate-500 hover:text-slate-700 underline">Done</button>
+                </form>
+            </div>
+
+            {% elif stage == "done_quick" %}
+            <div class="flex flex-col items-center justify-center h-full text-center px-4">
+                <p class="text-slate-600">{{ farewell_message }}</p>
+                <p class="text-xs text-slate-400 mt-4 mb-4">Logged for today. I'm here whenever you're ready.</p>
+                <form method="POST" action="/checkin/reset">
+                    <button type="submit" class="text-sm text-slate-500 hover:text-slate-700 underline">Back to check-in</button>
+                </form>
+            </div>
+
+            {% else %}
+            <div class="flex-1 overflow-y-auto space-y-3 mb-4" id="chatBox">
+                {% for msg in messages %}
+                    {% if msg.role == "assistant" %}
+                    <div class="bg-slate-100 text-slate-700 rounded-lg px-3 py-2 text-sm max-w-[85%]">
+                        {{ msg.content }}
+                    </div>
+                    {% else %}
+                    <div class="bg-slate-800 text-white rounded-lg px-3 py-2 text-sm max-w-[85%] ml-auto">
+                        {{ msg.content }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <form method="POST" action="/checkin/send" class="flex gap-2 mb-3">
+                <input type="text" name="message" id="messageInput" placeholder="Type here..." autocomplete="off"
+                       class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm" required>
+                <button type="submit" class="bg-slate-800 text-white rounded-lg px-4 text-sm font-medium hover:bg-slate-700">
+                    Send
+                </button>
+            </form>
+
+            {% if not confirming_save %}
+            <a href="/checkin/save" class="block text-center bg-emerald-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-emerald-500">
+                Wrap up & save
+            </a>
+            {% else %}
+            <form method="POST" action="/checkin/save" class="space-y-2 border-t pt-3 mt-2">
+                <p class="text-xs text-slate-500">Here's what I picked up - adjust if it's off:</p>
+                <textarea name="summary" class="w-full border border-slate-300 rounded-lg px-2 py-1 text-sm" rows="2">{{ suggested_summary }}</textarea>
+                <label class="flex items-center gap-2 text-xs text-slate-500">
+                    <input type="checkbox" name="keep_available">
+                    Keep this available to continue later
+                </label>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs text-slate-500">Mood:</label>
+                    <input type="number" name="mood_score" min="1" max="5" value="{{ suggested_score }}"
+                           class="w-16 border border-slate-300 rounded-lg px-2 py-1 text-sm">
+                    <button type="submit" class="ml-auto bg-emerald-600 text-white rounded-lg px-3 py-1 text-sm font-medium hover:bg-emerald-500">
+                        Confirm & save
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+
+            <form method="POST" action="/checkin/reset" class="mt-2">
+                <button type="submit" class="text-xs text-slate-400 hover:text-slate-600 underline">Start fresh</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-slate-800 mb-4">This week</h2>
+            <p class="text-slate-500 text-sm">Calendar feature coming next.</p>
+        </div>
+
+        <div class="lg:col-span-3 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-slate-800 mb-4">Recent mood</h2>
+            {% if recent_moods %}
+            <div class="flex items-end gap-3 h-32">
+                {% for timestamp, mood_score, note in recent_moods %}
+                <div class="flex-1 flex flex-col items-center justify-end h-full">
+                    <div class="w-full rounded-t-lg
+                        {% if mood_score <= 2 %}bg-red-200
+                        {% elif mood_score == 3 %}bg-yellow-200
+                        {% else %}bg-emerald-200{% endif %}"
+                        style="height: {{ (mood_score / 5 * 100) | round | int }}%">
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">{{ timestamp[5:10] }}</p>
+                    <p class="text-xs text-slate-500 font-medium">{{ mood_score }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-slate-500 text-sm">No check-ins yet - your trend will show up here once you start.</p>
+            {% endif %}
+        </div>
+
+    </main>
+
+    <script>
+        const chatBox = document.getElementById("chatBox");
+        if (chatBox) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+
+</body>
+</html>
